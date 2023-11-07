@@ -2,7 +2,7 @@ from flask_restplus import Namespace, Resource, reqparse
 from flask_login import login_required, current_user
 from werkzeug.datastructures import FileStorage
 from flask import send_file
-from mongoengine.errors import NotUniqueError
+from mongoengine.errors import NotUniqueError, DoesNotExist
 
 from ..util import query_util, coco_util
 from database import (
@@ -42,6 +42,11 @@ copy_annotations = reqparse.RequestParser()
 copy_annotations.add_argument('category_ids', location='json', type=list,
                               required=False, default=None, help='Categories to copy')
 
+image_coco = reqparse.RequestParser()
+image_coco.add_argument('file_name', type=str, default=None,required=False,location='json')
+
+image_update = reqparse.RequestParser()
+image_update.add_argument('deleted', location='json', type=bool, required=True)
 
 @api.route('/')
 class Images(Resource):
@@ -82,13 +87,17 @@ class Images(Resource):
         dataset_id = args['dataset_id']
         try:
             dataset = DatasetModel.objects.get(id=dataset_id)
-        except:
+        except Exception:
             return {'message': 'dataset does not exist'}, 400
         directory = dataset.directory
         path = os.path.join(directory, image.filename)
 
         if os.path.exists(path):
-            return {'message': 'file already exists'}, 400
+            try:
+                db_image = ImageModel.objects.get(path=path)
+                return {'message': 'file already exists'}, 400
+            except Exception:
+                pass
 
         pil_image = Image.open(io.BytesIO(image.read()))
 
@@ -136,6 +145,23 @@ class ImageId(Resource):
         image_io.seek(0)
 
         return send_file(image_io, attachment_filename=image.file_name, as_attachment=as_attachment)
+    
+    @api.expect(image_update)
+    @login_required
+    def put(self, image_id):
+        args = image_update.parse_args()
+        deleted = args.get('deleted')
+        """ Update an image by ID """
+        image = current_user.images.filter(id=image_id).first()
+        if image is None:
+            return {"message": "Invalid image id"}, 400
+
+        if not current_user.can_delete(image):
+            return {"message": "You do not have permission to download the image"}, 403
+
+        if deleted is not None:
+            image.update(set__deleted=deleted,set__annotated=False)
+        return {"success": True}
 
     @login_required
     def delete(self, image_id):
@@ -147,7 +173,7 @@ class ImageId(Resource):
         if not current_user.can_delete(image):
             return {"message": "You do not have permission to download the image"}, 403
 
-        image.update(set__deleted=True, set__deleted_date=datetime.datetime.now())
+        image.delete()
         return {"success": True}
 
 
@@ -187,10 +213,16 @@ class ImageCopyAnnotations(Resource):
 @api.route('/<int:image_id>/coco')
 class ImageCoco(Resource):
 
+    @api.expect(image_coco)
     @login_required
     def get(self, image_id):
         """ Returns coco of image and annotations """
-        image = current_user.images.filter(id=image_id).exclude('deleted_date').first()
+        args = image_coco.parse_args()
+        file_name = args['file_name']
+        if file_name:
+            image = current_user.images.filter(file_name=file_name).exclude('deleted_date').first()
+        else:
+            image = current_user.images.filter(id=image_id).exclude('deleted_date').first()
         
         if image is None:
             return {"message": "Invalid image ID"}, 400
@@ -198,5 +230,5 @@ class ImageCoco(Resource):
         if not current_user.can_download(image):
             return {"message": "You do not have permission to download the images's annotations"}, 403
 
-        return coco_util.get_image_coco(image_id)
+        return coco_util.get_image_coco(image.id)
 

@@ -45,7 +45,7 @@ export default {
         segments: true,
         stroke: true,
         fill: false,
-        tolerance: 10,
+        tolerance: 1,
         match: hit => {
           return !hit.item.hasOwnProperty("indicator");
         }

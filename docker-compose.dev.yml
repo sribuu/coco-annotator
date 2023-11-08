@@ -77,6 +77,10 @@ services:
     depends_on:
       - messageq
       - database
+    deploy:
+      resources:
+        limits:
+          memory: 4000M
     ports:
       - 5555:5555
     networks:

@@ -383,12 +383,12 @@ export default {
       }
     },
     onkeyup(e) {
-      if (e.keyCode==91 || e.ctrlKey) {
+      if (e.keyCode==91) {
         this.multiSelectReady = false
       }
     },
     onkeydown(e) {
-      if (e.keyCode==91 || e.ctrlKey) {
+      if (e.keyCode==91) {
         this.multiSelectReady = true
       }
     },

@@ -437,7 +437,7 @@ export default {
       axios.delete("/api/annotation/" + this.annotation.id).then(() => {
         this.$socket.emit("annotation", {
           action: "delete",
-          annotation: this.annotation
+          annotation: this.annotation,
         });
         this.delete();
 
@@ -983,14 +983,14 @@ export default {
       if (data.action == "delete") {
         this.delete();
       }
-    }
+    },
   },
   mounted() {
     this.initAnnotation();
     $(`#keypointSettings${this.annotation.id}`).on("hidden.bs.modal", () => {
       this.currentKeypoint = null;
     });
-  }
+  },
 };
 </script>
 

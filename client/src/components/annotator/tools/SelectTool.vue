@@ -49,7 +49,9 @@ export default {
         match: hit => {
           return !hit.item.hasOwnProperty("indicator");
         }
-      }
+      },
+      multiSelectReady: false,
+      selectedBox: []
     };
   },
   methods: {
@@ -181,6 +183,7 @@ export default {
         event.point,
         this.hitOptions
       );
+      
 
       if (!hitResult) return;
 
@@ -202,6 +205,16 @@ export default {
         this.initPoint = event.point;
         this.moveObject = event.item;
         paperObject = event.item;
+        // FOr multi select
+        if (this.multiSelectReady) {
+          const findIndex = this.selectedBox.findIndex(a => a.id === this.moveObject.id)
+          if (findIndex !== -1) {
+            this.selectedBox.splice(findIndex, 1)
+          } else {
+            this.selectedBox.push(this.moveObject)
+          }
+        }
+       
       }
       this.isBbox = this.checkBbox(paperObject);
       if (this.point != null) {
@@ -216,6 +229,10 @@ export default {
       this.isBbox = false;
       this.segment = null;
       this.moveObject = null;
+      if(!this.multiSelectReady){
+        this.selectedBox = []
+      }
+     
       if (this.hover.text != null) {
         this.hover.text.remove();
         this.hover.box.remove();
@@ -237,11 +254,19 @@ export default {
       if (this.isBbox && this.moveObject) {
         let delta_x = this.initPoint.x - event.point.x;
         let delta_y = this.initPoint.y - event.point.y;
-        let segments = this.moveObject.children[0].segments;
-        segments.forEach(segment => {
-          let p = segment.point;
-          segment.point = new paper.Point(p.x - delta_x, p.y - delta_y);
-        });
+        if(this.selectedBox.length==0){
+          this.selectedBox = [this.moveObject]
+        }
+        
+        for (const iterator of this.selectedBox) {
+          let segments = iterator.children[0].segments;
+          segments.forEach(segment => {
+            let p = segment.point;
+            segment.point = new paper.Point(p.x - delta_x, p.y - delta_y);
+          });
+        }
+
+        
         this.initPoint = event.point;
       }
       if (this.segment && this.edit.canMove) {
@@ -270,7 +295,7 @@ export default {
         let new_center = this.$parent.paper.view.center.add(center_delta);
         this.$parent.paper.view.setCenter(new_center);
       }
-      
+
     },
 
     onMouseUp(event) {
@@ -280,7 +305,7 @@ export default {
     onMouseMove(event) {
       // ensures that the initPoint is always tracked. 
       // Necessary for the introduced pan functionality and fixes a bug with selecting and dragging bboxes, since initPoint is initially undefined
-      this.initPoint = event.point;  
+      this.initPoint = event.point;
 
       let hitResult = this.$parent.paper.project.hitTest(
         event.point,
@@ -356,7 +381,17 @@ export default {
       } else {
         this.clear();
       }
-    }
+    },
+    onkeyup(e) {
+      if (e.keyCode==91 || e.ctrlKey) {
+        this.multiSelectReady = false
+      }
+    },
+    onkeydown(e) {
+      if (e.keyCode==91 || e.ctrlKey) {
+        this.multiSelectReady = true
+      }
+    },
   },
   watch: {
     keypoint(keypoint) {
@@ -411,6 +446,18 @@ export default {
         }
       }
     }
+  },
+
+  created() {
+    window.addEventListener("keyup", (this.onKeyup = this.onkeyup.bind(this)));
+    window.addEventListener(
+      "keydown",
+      (this.onKeydown = this.onkeydown.bind(this))
+    );
+  },
+  destroyed() {
+    window.removeEventListener("keydown", this.onKeydown);
+    window.removeEventListener("keydup", this.onKeyup);
   }
 };
 </script>

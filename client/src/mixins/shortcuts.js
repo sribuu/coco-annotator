@@ -32,7 +32,7 @@ export default {
           name: "Collapse Category"
         },
         {
-          default: ["space"],
+          default: ["control", "n"],
           name: "New Annotation",
           function: () => {
             if (this.currentCategory) {
@@ -42,7 +42,7 @@ export default {
         },
         {
           default: ["backspace"],
-          name: "Delete Current Annotation",
+          name: "Delete Current or all selected Annotation",
           function: () => {
             if (this.currentAnnotation) {
               let currentKeypoint = this.currentAnnotation.currentKeypoint;
@@ -167,6 +167,11 @@ export default {
           default: ["]"],
           name: "Decrease Radius",
           function: this.$refs.brush.decreaseRadius
+        },
+        {
+          default: ["shift", "click"],
+          name: "Multiple Select Bounding Box",
+          readonly: true
         },
         {
           title: "Magic Tool Shortcuts",

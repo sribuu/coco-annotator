@@ -378,6 +378,9 @@ export default {
       this.compoundPath = new paper.CompoundPath();
       this.compoundPath.onDoubleClick = () => {
         if (this.activeTool !== "Select") return;
+        //can be use to edit multiple category
+        // console.log(this.$parent.$parent.paper.project.data)
+        
         $(`#annotationSettings${this.annotation.id}`).modal("show");
       };
       this.keypoints = new Keypoints(this.keypointEdges, this.keypointLabels,
@@ -434,18 +437,59 @@ export default {
       };
     },
     deleteAnnotation() {
-      axios.delete("/api/annotation/" + this.annotation.id).then(() => {
+      var boxs = []
+      var resBx = this.$parent.$parent.paper.project.data
+      if(resBx && resBx.boxs && resBx.boxs.length>0){
+        boxs = resBx.boxs
+      }else{
+        boxs = [this.annotation]
+      }
+      console.log(boxs)
+
+      for (const iterator of boxs) {
+        
+        var comparId = iterator.data
+        if(comparId){
+          comparId = iterator.data.annotationId
+        }else{
+          comparId = this.index
+        }
+        var ann = this.$parent.category.annotations[comparId];
+        axios.delete("/api/annotation/" + ann.id);
+
         this.$socket.emit("annotation", {
           action: "delete",
-          annotation: this.annotation,
+          annotation: ann,
         });
         this.delete();
 
-        this.$emit("deleted", this.index);
-      });
+        this.$emit("deleted", comparId);
+      }
+      
     },
     delete() {
-      this.$parent.category.annotations.splice(this.index, 1);
+      // var boxs = []
+      // var resBx = this.$parent.$parent.paper.project.data
+      // if(resBx){
+      //   boxs = resBx.boxs
+      // }else{
+      //   boxs = [this.annotation]
+      // }
+
+      // for (const iterator of boxs) {
+       
+      //   var comparId = iterator.data
+      //   if(comparId){
+      //     comparId = iterator.data.annotationId+1
+      //   }else{
+      //     comparId = this.index
+      //   }
+      // //  console.log( this.$parent.category.annotations)
+      //   // const findIndex = this.$parent.category.annotations.findIndex(a => a.index === comparId)
+      //   // if (findIndex !== -1) {
+      //     this.$parent.category.annotations.splice(comparId, 1);
+      //   // }
+      // }
       if (this.compoundPath != null) this.compoundPath.remove();
       if (this.keypoints != null) {
         this.keypoints._keypoints.forEach( keypoint => {

@@ -183,11 +183,10 @@ export default {
         event.point,
         this.hitOptions
       );
-      
 
       if (!hitResult) return;
 
-      if (event.modifiers.shift) {
+      if (event.modifiers.space) {
         if (hitResult.type === "segment") {
           hitResult.segment.remove();
         }
@@ -195,6 +194,7 @@ export default {
       }
       let path = hitResult.item;
       let paperObject = null;
+
       if (hitResult.type === "segment") {
         this.segment = hitResult.segment;
         paperObject = path.parent;
@@ -205,17 +205,26 @@ export default {
         this.initPoint = event.point;
         this.moveObject = event.item;
         paperObject = event.item;
-        // FOr multi select
+
+        // For multi select
         if (this.multiSelectReady) {
           const findIndex = this.selectedBox.findIndex(a => a.id === this.moveObject.id)
           if (findIndex !== -1) {
+           
             this.selectedBox.splice(findIndex, 1)
           } else {
             this.selectedBox.push(this.moveObject)
           }
+          this.$parent.paper.project.data = {boxs:this.selectedBox}
         }
        
+      }else if(hitResult.type==="pixel"){
+        if(!this.multiSelectReady){
+          this.selectedBox =[]
+          this.$parent.paper.project.data = {boxs:this.selectedBox}
+        }
       }
+
       this.isBbox = this.checkBbox(paperObject);
       if (this.point != null) {
         this.edit.canMove = this.point.contains(event.point);
@@ -231,6 +240,7 @@ export default {
       this.moveObject = null;
       if(!this.multiSelectReady){
         this.selectedBox = []
+        this.$parent.paper.project.data = {boxs:this.selectedBox}
       }
      
       if (this.hover.text != null) {
@@ -252,6 +262,7 @@ export default {
     },
     onMouseDrag(event) {
       if (this.isBbox && this.moveObject) {
+       
         let delta_x = this.initPoint.x - event.point.x;
         let delta_y = this.initPoint.y - event.point.y;
         if(this.selectedBox.length==0){
@@ -259,6 +270,7 @@ export default {
         }
         
         for (const iterator of this.selectedBox) {
+          iterator.selected = true
           let segments = iterator.children[0].segments;
           segments.forEach(segment => {
             let p = segment.point;
@@ -383,12 +395,12 @@ export default {
       }
     },
     onkeyup(e) {
-      if (e.keyCode==91) {
+      if (e.key=="Shift") {
         this.multiSelectReady = false
       }
     },
     onkeydown(e) {
-      if (e.keyCode==91) {
+      if (e.key=="Shift") {
         this.multiSelectReady = true
       }
     },

@@ -52,7 +52,8 @@ export default {
       if (target === "textarea") return;
 
       e.preventDefault();
-      this.shortcut.function();
+      if(this.shortcut.function){
+      this.shortcut.function();}
     },
     onkeydown(e) {
       if (this.readonly) {

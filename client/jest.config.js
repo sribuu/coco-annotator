@@ -1,3 +1,6 @@
+var hostname = window.location.host;
+var urlWithoutPort = `http://${hostname}`;
+
 module.exports = {
   moduleFileExtensions: ["js", "jsx", "json", "vue"],
   transform: {
@@ -10,5 +13,5 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1"
   },
   snapshotSerializers: ["jest-serializer-vue"],
-  testURL: "http://localhost/"
+  testURL: urlWithoutPort
 };

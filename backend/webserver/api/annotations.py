@@ -116,6 +116,25 @@ class AnnotationId(Resource):
         newAnnotation = current_user.annotations.filter(id=annotation_id).first()
         return query_util.fix_ids(newAnnotation)
 
+@api.route('/image/<int:image_id>')
+class AnnotationImageId(Resource):
+    @login_required
+    def delete(self, image_id):
+        """ Deletes all annotations by Image ID """
+        image = current_user.images.filter(id=image_id).first()
+
+        if image is None:
+            return {"message": "Invalid image id"}, 400
+
+        if not current_user.can_delete(image):
+            return {"message": "You do not have permission to delete annotations"}, 403
+
+        AnnotationModel.objects(image_id=image_id).delete()
+
+        image.flag_thumbnail()
+
+        return {'success': True}
+
 # @api.route('/<int:annotation_id>/mask')
 # class AnnotationMask(Resource):
 #     def get(self, annotation_id):

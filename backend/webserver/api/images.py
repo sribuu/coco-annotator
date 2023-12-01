@@ -24,6 +24,7 @@ image_all = reqparse.RequestParser()
 image_all.add_argument('fields', required=False, type=str)
 image_all.add_argument('page', default=1, type=int)
 image_all.add_argument('per_page', default=50, type=int, required=False)
+image_all.add_argument('file_name', type=str, required=False)
 
 image_upload = reqparse.RequestParser()
 image_upload.add_argument('image', location='files',
@@ -59,8 +60,11 @@ class Images(Resource):
         per_page = args['per_page']
         page = args['page']-1
         fields = args.get('fields', '')
-
-        images = current_user.images.filter(deleted=False)
+        file_name = args['file_name']
+        if file_name:
+            images = current_user.images.filter(file_name=file_name)
+        else:
+            images = current_user.images.filter(deleted=False)
         total = images.count()
         pages = int(total/per_page) + 1
 

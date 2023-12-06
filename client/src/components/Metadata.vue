@@ -87,7 +87,8 @@ export default {
       this.metadataList.forEach(object => {
         if (object.key.length > 0) {
           if (!isNaN(object.value))
-            metadata[object.key] = parseInt(object.value);
+            // don't parse
+            // metadata[object.key] = parseInt(object.value);
           else if (
             object.value.toLowerCase() === "true" ||
             object.value.toLowerCase() === "false"

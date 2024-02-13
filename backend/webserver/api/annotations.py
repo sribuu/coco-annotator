@@ -22,6 +22,7 @@ create_annotation.add_argument('color', location='json')
 
 update_annotation = reqparse.RequestParser()
 update_annotation.add_argument('category_id', type=int, location='json')
+update_annotation.add_argument('metadata', type=dict, location='json')
 
 @api.route('/')
 class Annotation(Resource):
@@ -109,7 +110,12 @@ class AnnotationId(Resource):
         args = update_annotation.parse_args()
 
         new_category_id = args.get('category_id')
-        annotation.update(category_id=new_category_id)
+        metadata = args.get('metadata')
+        if new_category_id:
+            annotation.update(category_id=new_category_id)
+        if metadata:
+            annotation.update(metadata=metadata)
+            
         logger.info(
             f'{current_user.username} has updated category for annotation (id: {annotation.id})'
         )
